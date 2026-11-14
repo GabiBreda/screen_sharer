@@ -5,7 +5,7 @@
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
     "build": "npm run build -w @screenshare/shared && npm run build -w @screenshare/server && npm run build -w @screenshare/web",
-    "test": "npm run test -w @screenshare/server",
+    "test": "npm run test -w @screenshare/server && npm run test -w @screenshare/web",
     "lint": "npm run build -w @screenshare/shared && npm run lint -w @screenshare/shared && npm run lint -w @screenshare/server && npm run lint -w @screenshare/web",
     "dev": "concurrently -n shared,server,web -c yellow,blue,green \"npm run dev -w @screenshare/shared\" \"npm run dev -w @screenshare/server\" \"npm run dev -w @screenshare/web\""
   },

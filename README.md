@@ -26,6 +26,10 @@ npm run build
 - TURN é necessário para algumas redes corporativas/NATs restritivos.
 - Produção requer HTTPS/WSS e autorização explícita do navegador.
 
+## Captura de jogos
+
+A captura depende de frames que o navegador e o sistema operacional disponibilizam. O aplicativo detecta uma prévia provavelmente preta e informa o usuário, mas não tenta contornar proteções de aplicativos ou anti-cheat. Consulte [o procedimento de diagnóstico](docs/SCREEN-CAPTURE.md).
+
 ## Vercel
 
 O projeto usa os serviços `web` e `server`, definidos em `vercel.json`. O navegador acessa a API e a sinalização Socket.IO pelo mesmo domínio, em `/api` e `/api/socket.io`; não há binding interno entre os serviços. Para sessões confiáveis entre múltiplas instâncias, substitua o armazenamento em memória por Redis antes de escalar o deploy.
