@@ -13,6 +13,7 @@ export interface SessionRecord {
   viewerSocketIds: Set<string>;
   state: SessionState;
   expiresAt: number;
+  presenterHasConnected: boolean;
   presenterDisconnectedAt?: number;
 }
 
@@ -22,15 +23,20 @@ export class SessionStore {
   private readonly sessions = new Map<string, SessionRecord>();
 
   create(): CreatedSession {
-    this.prune();
     let code = "";
     do { code = generateSessionCode(); } while (this.sessions.has(code));
-    const record: SessionRecord = { code, presenterToken: randomBytes(32).toString("base64url"), viewerSocketIds: new Set(), state: "waiting", expiresAt: Date.now() + SESSION_TTL_MS };
+    const record: SessionRecord = { code, presenterToken: randomBytes(32).toString("base64url"), viewerSocketIds: new Set(), state: "waiting", expiresAt: Date.now() + SESSION_TTL_MS, presenterHasConnected: false };
     this.sessions.set(code, record);
     return { code, presenterToken: record.presenterToken, expiresAt: new Date(record.expiresAt).toISOString() };
   }
 
-  get(code: string): SessionRecord | undefined { this.prune(); return this.sessions.get(code); }
+  get(code: string): SessionRecord | undefined {
+    const session = this.sessions.get(code);
+    if (!session) return undefined;
+    const presenterGoneTooLong = session.presenterHasConnected && session.presenterDisconnectedAt && Date.now() - session.presenterDisconnectedAt > RECONNECT_GRACE_MS;
+    const abandonedBeforeStart = !session.presenterHasConnected && session.expiresAt <= Date.now();
+    return session.state === "ended" || abandonedBeforeStart || presenterGoneTooLong ? undefined : session;
+  }
   validate(code: string): PublicSession | undefined { const session = this.get(code); return session && session.state !== "ended" ? this.public(session) : undefined; }
   authenticatePresenter(code: string, token: string): SessionRecord | undefined { const session = this.get(code); return session?.presenterToken === token && session.state !== "ended" ? session : undefined; }
   public(session: SessionRecord): PublicSession { return { code: session.code, state: session.state, viewerCount: session.viewerSocketIds.size, expiresAt: new Date(session.expiresAt).toISOString() }; }
@@ -38,8 +44,9 @@ export class SessionStore {
   prune(now = Date.now()): string[] {
     const expired: string[] = [];
     for (const [code, session] of this.sessions) {
-      const presenterGoneTooLong = session.presenterDisconnectedAt && now - session.presenterDisconnectedAt > RECONNECT_GRACE_MS;
-      if (session.expiresAt <= now || presenterGoneTooLong) { this.sessions.delete(code); expired.push(code); }
+      const presenterGoneTooLong = session.presenterHasConnected && session.presenterDisconnectedAt && now - session.presenterDisconnectedAt > RECONNECT_GRACE_MS;
+      const abandonedBeforeStart = !session.presenterHasConnected && session.expiresAt <= now;
+      if (session.state === "ended" || abandonedBeforeStart || presenterGoneTooLong) { this.sessions.delete(code); expired.push(code); }
     }
     return expired;
   }

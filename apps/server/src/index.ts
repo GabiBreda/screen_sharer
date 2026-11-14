@@ -45,7 +45,7 @@ io.on("connection", (socket) => {
     if (!session) { callback({ ok: false, error: "Sessão indisponível." }); return; }
     socket.data.code = code; socket.join(`session:${code}`);
     const raw = store.get(code)!;
-    if (isPresenter()) { raw.presenterSocketId = socket.id; raw.presenterDisconnectedAt = undefined; }
+    if (isPresenter()) { raw.presenterSocketId = socket.id; raw.presenterHasConnected = true; raw.presenterDisconnectedAt = undefined; }
     else { if (raw.viewerSocketIds.size >= MAX_VIEWERS) { socket.leave(`session:${code}`); callback({ ok: false, error: "A sessão atingiu o limite de espectadores." }); return; } raw.viewerSocketIds.add(socket.id); io.to(`session:${code}`).emit("session:viewers", raw.viewerSocketIds.size); if (raw.presenterSocketId) io.to(raw.presenterSocketId).emit("viewer:joined", socket.id); }
     callback({ ok: true, session });
   });
@@ -68,5 +68,6 @@ function relay(socket: typeof io.sockets.sockets extends Map<string, infer T> ? 
   else recipient.emit(event, socket.id, payload as RTCIceCandidateInit);
 }
 function json(response: import("node:http").ServerResponse, status: number, value: unknown): void { response.writeHead(status, { "Content-Type": "application/json" }); response.end(JSON.stringify(value)); }
+setInterval(() => { for (const code of store.prune()) io.to(`session:${code}`).emit("session:ended", "expired"); }, 5_000).unref();
 const port = Number(process.env.PORT ?? 3001);
 httpServer.listen(port, () => console.info(`Signalling server running on :${port}`));

@@ -22,6 +22,7 @@ npm run build
 ## Limitações do MVP
 
 - Sessões e proteção contra tentativas ficam em memória e são perdidas ao reiniciar.
+- Uma sessão iniciada permanece ativa enquanto o apresentador estiver conectado; após a desconexão, há uma janela de reconexão configurável antes do encerramento automático.
 - Cada espectador recebe uma conexão WebRTC; capacidade depende da banda do apresentador.
 - TURN é necessário para algumas redes corporativas/NATs restritivos.
 - Produção requer HTTPS/WSS e autorização explícita do navegador.
