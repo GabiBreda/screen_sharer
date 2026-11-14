@@ -6,7 +6,8 @@ import { MAX_VIEWERS, SessionStore } from "./session-store.js";
 
 const store = new SessionStore();
 const rateLimiter = new RateLimiter();
-const allowedOrigin = process.env.WEB_ORIGIN ?? "http://localhost:5173";
+const allowedOrigin = process.env.WEB_ORIGIN ?? "*";
+const socketPath = process.env.VERCEL ? "/api/socket.io" : "/socket.io";
 const httpServer = createServer((request, response) => {
   response.setHeader("Access-Control-Allow-Origin", allowedOrigin);
   response.setHeader("Access-Control-Allow-Headers", "content-type");
@@ -26,7 +27,7 @@ const httpServer = createServer((request, response) => {
   json(response, 404, { error: "Não encontrado." });
 });
 
-const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, { cors: { origin: allowedOrigin, methods: ["GET", "POST"] } });
+const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, { path: socketPath, cors: { origin: allowedOrigin, methods: ["GET", "POST"] } });
 io.use((socket, next) => {
   const code = typeof socket.handshake.auth.code === "string" ? socket.handshake.auth.code : "";
   const token = typeof socket.handshake.auth.presenterToken === "string" ? socket.handshake.auth.presenterToken : "";

@@ -25,3 +25,7 @@ npm run build
 - Cada espectador recebe uma conexão WebRTC; capacidade depende da banda do apresentador.
 - TURN é necessário para algumas redes corporativas/NATs restritivos.
 - Produção requer HTTPS/WSS e autorização explícita do navegador.
+
+## Vercel
+
+O projeto usa os serviços `web` e `server`, definidos em `vercel.json`. O navegador acessa a API e a sinalização Socket.IO pelo mesmo domínio, em `/api` e `/api/socket.io`; não há binding interno entre os serviços. Para sessões confiáveis entre múltiplas instâncias, substitua o armazenamento em memória por Redis antes de escalar o deploy.
