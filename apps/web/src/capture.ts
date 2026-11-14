@@ -20,6 +20,14 @@ export function captureErrorMessage(error: unknown): string {
   return messages[error.name] ?? "Não foi possível iniciar o compartilhamento.";
 }
 
+/** Browser-tab audio is isolated from desktop applications such as Discord. */
+export function keepOnlyTabAudio(stream: MediaStream): boolean {
+  const surface = stream.getVideoTracks()[0]?.getSettings().displaySurface;
+  if (surface === "browser") return true;
+  stream.getAudioTracks().forEach((track) => track.stop());
+  return false;
+}
+
 /** Checks only the local preview. Pixel data is never stored or transmitted. */
 export function inspectLocalPreview(video: HTMLVideoElement): string | undefined {
   if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || !video.videoWidth) return "A prévia ainda não recebeu frames da fonte selecionada.";
